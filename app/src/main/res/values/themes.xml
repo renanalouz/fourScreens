@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Theme ראשי של האפליקציה -->
+    <style name="Theme.FourScreens" parent="Theme.Material3.DayNight.NoActionBar">
+
+        <!-- צבע ראשי -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryContainer">@color/primary_dark</item>
+
+        <!-- צבע משני / accent -->
+        <item name="colorSecondary">@color/accent</item>
+
+        <!-- צבע רקע -->
+        <item name="android:windowBackground">@color/background</item>
+
+        <!-- צבע טקסט כללי -->
+        <item name="android:textColor">@color/text_primary</item>
+
+    </style>
+
+</resources>
+

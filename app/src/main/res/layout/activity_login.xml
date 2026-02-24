@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/background"
+    android:padding="24dp">
+
+    <!-- לוגו -->
+    <ImageView
+        android:id="@+id/loginLogo"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_gravity="center"
+        android:src="@drawable/logo"
+        android:contentDescription="App logo"
+        android:layout_marginTop="40dp"
+        android:layout_marginBottom="32dp" />
+
+    <!-- כותרת -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="התחברות"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_primary"
+        android:layout_gravity="center"
+        android:layout_marginBottom="24dp" />
+
+    <!-- אימייל -->
+    <EditText
+        android:id="@+id/emailInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="אימייל"
+        android:inputType="textEmailAddress"
+        android:layout_marginBottom="16dp" />
+
+    <!-- סיסמה -->
+    <EditText
+        android:id="@+id/passwordInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="סיסמה"
+        android:inputType="textPassword"
+        android:layout_marginBottom="24dp" />
+
+    <!-- כפתור התחברות -->
+    <Button
+        android:id="@+id/loginButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="התחבר"
+        android:backgroundTint="@color/primary"
+        android:textColor="@color/white" />
+
+</LinearLayout>

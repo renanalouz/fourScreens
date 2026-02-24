@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- צבעי האפליקציה -->
+    <color name="primary">#1ECAD3</color>        <!-- טורקיז -->
+    <color name="primary_dark">#0F8B8D</color>   <!-- טורקיז כהה -->
+    <color name="accent">#4DD0E1</color>         <!-- כחול בהיר -->
+
+    <!-- צבעי רקע וטקסט -->
+    <color name="background">#F5FDFE</color>
+    <color name="text_primary">#263238</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+
+</resources>
