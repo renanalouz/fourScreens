@@ -43,7 +43,7 @@ public class ListingsActivity extends AppCompatActivity {
                     "תל אביב",
                     250
             );
-
+// t
             Executors.newSingleThreadExecutor().execute(() ->
                     db.ticketListingDao().insert(newItem)
             );
