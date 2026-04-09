@@ -1,5 +1,6 @@
 package com.example.fourscreens.ui.adapter;
 
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,23 +10,21 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.fourscreens.R;
+import com.example.fourscreens.TicketDetailsActivity;
 import com.example.fourscreens.data.entity.TicketListing;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class TicketListingAdapter
-        extends RecyclerView.Adapter<TicketListingAdapter.ViewHolder> {
+public class TicketListingAdapter extends RecyclerView.Adapter<TicketListingAdapter.ViewHolder> {
 
     private List<TicketListing> listings = new ArrayList<>();
 
-    // מקבל רשימה חדשה ומעדכן את המסך
     public void setListings(List<TicketListing> listings) {
         this.listings = listings;
         notifyDataSetChanged();
     }
 
-    // יוצר View חדש לכל פריט
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -34,26 +33,31 @@ public class TicketListingAdapter
         return new ViewHolder(view);
     }
 
-    // קושר נתונים לפריט
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         TicketListing item = listings.get(position);
 
-        holder.tvEventName.setText(item.eventName);
-        holder.tvDetails.setText(item.eventDate + " • " + item.location);
-        holder.tvPrice.setText("₪" + item.price);
+        holder.tvEventName.setText(item.getEventName());
+        holder.tvDetails.setText(item.getEventDate() + " • " + item.getLocation());
+        holder.tvPrice.setText("₪" + item.getPrice());
+
+        holder.itemView.setOnClickListener(v -> {
+            Intent intent = new Intent(v.getContext(), TicketDetailsActivity.class);
+            intent.putExtra("ticket", item);
+            v.getContext().startActivity(intent);
+        });
     }
 
-    // כמה פריטים יש
     @Override
     public int getItemCount() {
         return listings.size();
     }
 
-    // מחזיק את ה-Views של פריט אחד
     static class ViewHolder extends RecyclerView.ViewHolder {
 
-        TextView tvEventName, tvDetails, tvPrice;
+        TextView tvEventName;
+        TextView tvDetails;
+        TextView tvPrice;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -63,4 +67,3 @@ public class TicketListingAdapter
         }
     }
 }
-

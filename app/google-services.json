@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "882095446927",
+    "project_id": "louzounrenana",
+    "storage_bucket": "louzounrenana.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:882095446927:android:6fd48121fa7e44fbdf49fa",
+        "android_client_info": {
+          "package_name": "com.example.fourscreens"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCMzSgffdVrGIoaWBq8HyPRRqGclmZ7jQE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

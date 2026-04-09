@@ -14,15 +14,15 @@ import java.util.List;
 @Dao
 public interface TicketListingDao {
 
-    @Query("SELECT * FROM ticket_listings ORDER BY id DESC")
+    @Query("SELECT * FROM ticket_listings")
     LiveData<List<TicketListing>> getAll();
 
     @Insert
-    void insert(TicketListing listing);
+    void insert(TicketListing ticketListing);
 
     @Update
-    void update(TicketListing listing);
+    void update(TicketListing ticketListing);
 
     @Delete
-    void delete(TicketListing listing);
+    void delete(TicketListing ticketListing);
 }

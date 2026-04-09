@@ -9,25 +9,21 @@ import androidx.room.RoomDatabase;
 import com.example.fourscreens.data.dao.TicketListingDao;
 import com.example.fourscreens.data.entity.TicketListing;
 
-@Database(entities = {TicketListing.class}, version = 1)
+@Database(entities = {TicketListing.class}, version = 1, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
 
-    private static volatile AppDatabase INSTANCE;
+    private static AppDatabase instance;
 
     public abstract TicketListingDao ticketListingDao();
 
-    public static AppDatabase getInstance(Context context) {
-        if (INSTANCE == null) {
-            synchronized (AppDatabase.class) {
-                if (INSTANCE == null) {
-                    INSTANCE = Room.databaseBuilder(
-                            context.getApplicationContext(),
-                            AppDatabase.class,
-                            "tickets_db"
-                    ).build();
-                }
-            }
+    public static synchronized AppDatabase getInstance(Context context) {
+        if (instance == null) {
+            instance = Room.databaseBuilder(
+                    context.getApplicationContext(),
+                    AppDatabase.class,
+                    "app_database"
+            ).fallbackToDestructiveMigration().build();
         }
-        return INSTANCE;
+        return instance;
     }
 }

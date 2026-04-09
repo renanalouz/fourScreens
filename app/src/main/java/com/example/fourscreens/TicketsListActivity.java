@@ -8,10 +8,14 @@ import androidx.cardview.widget.CardView;
 
 public class TicketsListActivity extends AppCompatActivity {
 
+    private String sellerUsername;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tickets_list);
+
+        sellerUsername = "demoUser";
 
         CardView card1 = findViewById(R.id.cardTicket1);
         CardView card2 = findViewById(R.id.cardTicket2);
@@ -21,7 +25,8 @@ public class TicketsListActivity extends AppCompatActivity {
     }
 
     private void openDetails() {
-        Intent intent = new Intent(TicketsListActivity.this, TicketDetailsActivity.class);
+        Intent intent = new Intent(TicketsListActivity.this, ListingsActivity.class);
+        intent.putExtra("sellerUsername", sellerUsername);
         startActivity(intent);
     }
 }
