@@ -9,7 +9,8 @@
         android:id="@+id/tvEventName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="18sp" />
+        android:textSize="18sp"
+        android:textStyle="bold" />
 
     <TextView
         android:id="@+id/tvDetails"
@@ -23,4 +24,30 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
         android:textSize="16sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:gravity="end"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/btnEdit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="Edit ticket"
+            android:src="@android:drawable/ic_menu_edit"
+            android:background="@android:color/transparent" />
+
+        <ImageButton
+            android:id="@+id/btnDelete"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:contentDescription="Delete ticket"
+            android:src="@android:drawable/ic_menu_delete"
+            android:background="@android:color/transparent" />
+    </LinearLayout>
+
 </LinearLayout>

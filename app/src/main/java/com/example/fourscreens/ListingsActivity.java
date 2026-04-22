@@ -16,9 +16,12 @@ import java.util.List;
 public class ListingsActivity extends AppCompatActivity implements FirestoreCallback {
 
     private RecyclerView rvListings;
+    private Button btnAdd;
     private TicketListingAdapter adapter;
     private DBHandler dbHandler;
-    private String sellerUsername;
+
+    // כרגע משתמש דמו, אחר כך נחליף למשתמש מחובר אמיתי
+    private final String sellerUsername = "demoUser";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,36 +29,64 @@ public class ListingsActivity extends AppCompatActivity implements FirestoreCall
         setContentView(R.layout.activity_listings);
 
         rvListings = findViewById(R.id.rvListings);
-        Button btnAdd = findViewById(R.id.btnAdd);
+        btnAdd = findViewById(R.id.btnAdd);
 
-        adapter = new TicketListingAdapter();
+        dbHandler = new DBHandler();
+
+        adapter = new TicketListingAdapter(new TicketListingAdapter.OnTicketActionListener() {
+            @Override
+            public void onEdit(TicketListing ticket) {
+                updateTicket(ticket);
+            }
+
+            @Override
+            public void onDelete(TicketListing ticket) {
+                deleteTicket(ticket);
+            }
+        });
+
         rvListings.setLayoutManager(new LinearLayoutManager(this));
         rvListings.setAdapter(adapter);
 
-        dbHandler = new DBHandler();
-        sellerUsername = "demoUser";
+        loadTickets();
 
-        dbHandler.getTicketsBySeller(sellerUsername, this);
-
-        btnAdd.setOnClickListener(v -> {
-            TicketListing newItem = new TicketListing(
-                    "",
-                    "הופעה לדוגמה",
-                    "12/03/2026",
-                    "תל אביב",
-                    250,
-                    "הופעה",
-                    sellerUsername,
-                    "כרטיס לדוגמה"
-            );
-            dbHandler.addTicket(newItem, this);
-        });
+        btnAdd.setOnClickListener(v -> addNewTicket());
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        loadTickets();
+    }
+
+    private void loadTickets() {
         dbHandler.getTicketsBySeller(sellerUsername, this);
+    }
+
+    private void addNewTicket() {
+        TicketListing newTicket = new TicketListing(
+                "",
+                "הופעה חדשה",
+                "20/05/2026",
+                "חיפה",
+                200,
+                "הופעה",
+                sellerUsername,
+                "תיאור הכרטיס"
+        );
+
+        dbHandler.addTicket(newTicket, this);
+    }
+
+    private void updateTicket(TicketListing ticket) {
+        ticket.setPrice(ticket.getPrice() + 10);
+        ticket.setDescription(ticket.getDescription() + " (עודכן)");
+
+        dbHandler.updateTicket(ticket, this);
+    }
+
+    private void deleteTicket(TicketListing ticket) {
+        dbHandler.deleteTicket(ticket.getId(), this);
     }
 
     @Override
@@ -66,7 +97,7 @@ public class ListingsActivity extends AppCompatActivity implements FirestoreCall
     @Override
     public void onSuccess(String message) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
-        dbHandler.getTicketsBySeller(sellerUsername, this);
+        loadTickets();
     }
 
     @Override

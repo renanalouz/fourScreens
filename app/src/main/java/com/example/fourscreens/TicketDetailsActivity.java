@@ -1,5 +1,6 @@
 package com.example.fourscreens;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -9,21 +10,15 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.fourscreens.data.entity.TicketListing;
 
-import java.util.List;
-
 public class TicketDetailsActivity extends AppCompatActivity implements FirestoreCallback {
 
-    private EditText etName;
-    private EditText etDate;
-    private EditText etLocation;
-    private EditText etPrice;
-    private EditText etType;
-    private EditText etDescription;
-    private Button btnUpdate;
-    private Button btnDelete;
-
+    private EditText etName, etDate, etLocation, etPrice, etType, etDescription;
+    private Button btnUpdate, btnDelete, btnChat;
     private DBHandler dbHandler;
     private TicketListing ticket;
+
+    // כרגע משתמש דמו. אחר כך נחליף למשתמש מחובר אמיתי
+    private final String currentUsername = "demoUser";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,16 +33,13 @@ public class TicketDetailsActivity extends AppCompatActivity implements Firestor
         etDescription = findViewById(R.id.etDescription);
         btnUpdate = findViewById(R.id.btnUpdate);
         btnDelete = findViewById(R.id.btnDelete);
+        btnChat = findViewById(R.id.btnChat);
 
         dbHandler = new DBHandler();
-
-        Object extra = getIntent().getSerializableExtra("ticket");
-        if (extra instanceof TicketListing) {
-            ticket = (TicketListing) extra;
-        }
+        ticket = (TicketListing) getIntent().getSerializableExtra("ticket");
 
         if (ticket == null) {
-            Toast.makeText(this, "לא התקבל כרטיס", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "לא נמצא כרטיס", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
@@ -60,7 +52,27 @@ public class TicketDetailsActivity extends AppCompatActivity implements Firestor
         etDescription.setText(ticket.getDescription());
 
         btnUpdate.setOnClickListener(v -> updateTicket());
-        btnDelete.setOnClickListener(v -> deleteTicket());
+
+        btnDelete.setOnClickListener(v -> dbHandler.deleteTicket(ticket.getId(), this));
+
+        btnChat.setOnClickListener(v -> {
+            if (ticket.getSellerUsername() == null || ticket.getSellerUsername().trim().isEmpty()) {
+                Toast.makeText(this, "לא נמצא מוכר", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (ticket.getSellerUsername().equals(currentUsername)) {
+                Toast.makeText(this, "זה הכרטיס שלך", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            Intent intent = new Intent(TicketDetailsActivity.this, ChatActivity.class);
+            intent.putExtra("senderUsername", currentUsername);
+            intent.putExtra("receiverUsername", ticket.getSellerUsername());
+            intent.putExtra("ticketId", ticket.getId());
+            intent.putExtra("ticketName", ticket.getEventName());
+            startActivity(intent);
+        });
     }
 
     private void updateTicket() {
@@ -71,8 +83,8 @@ public class TicketDetailsActivity extends AppCompatActivity implements Firestor
         String type = etType.getText().toString().trim();
         String description = etDescription.getText().toString().trim();
 
-        if (name.isEmpty() || date.isEmpty() || location.isEmpty() || priceText.isEmpty() || type.isEmpty() || description.isEmpty()) {
-            Toast.makeText(this, "מלאי את כל השדות", Toast.LENGTH_SHORT).show();
+        if (name.isEmpty() || date.isEmpty() || location.isEmpty() || priceText.isEmpty() || type.isEmpty()) {
+            Toast.makeText(this, "מלאי את כל השדות החובה", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -80,7 +92,7 @@ public class TicketDetailsActivity extends AppCompatActivity implements Firestor
         try {
             price = Integer.parseInt(priceText);
         } catch (NumberFormatException e) {
-            Toast.makeText(this, "המחיר חייב להיות מספר", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "מחיר חייב להיות מספר", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -92,14 +104,6 @@ public class TicketDetailsActivity extends AppCompatActivity implements Firestor
         ticket.setDescription(description);
 
         dbHandler.updateTicket(ticket, this);
-    }
-
-    private void deleteTicket() {
-        dbHandler.deleteTicket(ticket.getId(), this);
-    }
-
-    @Override
-    public void onTicketsLoaded(List<TicketListing> tickets) {
     }
 
     @Override

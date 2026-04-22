@@ -3,11 +3,22 @@ package com.example.fourscreens;
 import androidx.annotation.NonNull;
 
 public class Student {
-    private int grade;
-    private String fullName, id;
+    private int grade; // יכול לשמש כדירוג מוכר/קונה באפליקציית כרטיסים
+    private String fullName;
+    private String id; // המזהה הייחודי (UID) מ-Firebase Auth
+    private String fcmToken; // השדה החדש להתראות
 
+    // קונסטרקטור ריק חובה עבור Firestore
     public Student(){}
 
+    public Student(String id, String fullName, int grade, String fcmToken) {
+        this.id = id;
+        this.fullName = fullName;
+        this.grade = grade;
+        this.fcmToken = fcmToken;
+    }
+
+    // Getters & Setters
     public int getGrade() {
         return grade;
     }
@@ -32,9 +43,21 @@ public class Student {
         this.id = id;
     }
 
+    public String getFcmToken() {
+        return fcmToken;
+    }
+
+    public void setFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
+    }
+
     @NonNull
     @Override
     public String toString() {
-        return "\n\n****************************\nשם מלא: "+this.getFullName()+"\nמספר ת.ז.: "+this.getId()+"\nציון סופי: "+this.getGrade()+"\n****************************\n\n";
+        return "\n\n****************************\n" +
+                "שם מלא: " + this.getFullName() + "\n" +
+                "מזהה משתמש: " + this.getId() + "\n" +
+                "דירוג: " + this.getGrade() + "\n" +
+                "****************************\n\n";
     }
 }
