@@ -27,6 +27,14 @@
             android:layout_height="wrap_content"
             android:hint="מיקום" />
 
+        <!-- 🔥 כפתור חדש למפות -->
+        <Button
+            android:id="@+id/btnOpenMaps"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="פתח מיקום בגוגל מפות"
+            android:layout_marginTop="8dp" />
+
         <EditText
             android:id="@+id/etPrice"
             android:layout_width="match_parent"

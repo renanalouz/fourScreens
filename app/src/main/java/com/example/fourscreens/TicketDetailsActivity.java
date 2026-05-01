@@ -1,6 +1,7 @@
 package com.example.fourscreens;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -13,11 +14,10 @@ import com.example.fourscreens.data.entity.TicketListing;
 public class TicketDetailsActivity extends AppCompatActivity implements FirestoreCallback {
 
     private EditText etName, etDate, etLocation, etPrice, etType, etDescription;
-    private Button btnUpdate, btnDelete, btnChat;
+    private Button btnUpdate, btnDelete, btnChat, btnOpenMaps;
     private DBHandler dbHandler;
     private TicketListing ticket;
 
-    // כרגע משתמש דמו. אחר כך נחליף למשתמש מחובר אמיתי
     private final String currentUsername = "demoUser";
 
     @Override
@@ -34,6 +34,7 @@ public class TicketDetailsActivity extends AppCompatActivity implements Firestor
         btnUpdate = findViewById(R.id.btnUpdate);
         btnDelete = findViewById(R.id.btnDelete);
         btnChat = findViewById(R.id.btnChat);
+        btnOpenMaps = findViewById(R.id.btnOpenMaps);
 
         dbHandler = new DBHandler();
         ticket = (TicketListing) getIntent().getSerializableExtra("ticket");
@@ -52,8 +53,26 @@ public class TicketDetailsActivity extends AppCompatActivity implements Firestor
         etDescription.setText(ticket.getDescription());
 
         btnUpdate.setOnClickListener(v -> updateTicket());
-
         btnDelete.setOnClickListener(v -> dbHandler.deleteTicket(ticket.getId(), this));
+
+        btnOpenMaps.setOnClickListener(v -> {
+            String location = etLocation.getText().toString().trim();
+
+            if (location.isEmpty()) {
+                Toast.makeText(this, "אין מיקום לפתיחה", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            Uri uri = Uri.parse("geo:0,0?q=" + Uri.encode(location));
+            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+            intent.setPackage("com.google.android.apps.maps");
+
+            try {
+                startActivity(intent);
+            } catch (Exception e) {
+                Toast.makeText(this, "Google Maps לא מותקן", Toast.LENGTH_SHORT).show();
+            }
+        });
 
         btnChat.setOnClickListener(v -> {
             if (ticket.getSellerUsername() == null || ticket.getSellerUsername().trim().isEmpty()) {
