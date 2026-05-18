@@ -6,27 +6,56 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
 public class TicketsListActivity extends AppCompatActivity {
 
-    private String sellerUsername;
+    private FirebaseUser currentUser;
+
+    private CardView cardAllTickets;
+    private CardView cardMyTickets;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tickets_list);
 
-        sellerUsername = "demoUser";
+        currentUser = FirebaseAuth.getInstance().getCurrentUser();
 
-        CardView card1 = findViewById(R.id.cardTicket1);
-        CardView card2 = findViewById(R.id.cardTicket2);
+        if (currentUser == null) {
+            startActivity(new Intent(TicketsListActivity.this, LoginActivity.class));
+            finish();
+            return;
+        }
 
-        card1.setOnClickListener(v -> openDetails());
-        card2.setOnClickListener(v -> openDetails());
-    }
+        cardAllTickets = findViewById(R.id.cardAllTickets);
+        cardMyTickets = findViewById(R.id.cardMyTickets);
 
-    private void openDetails() {
-        Intent intent = new Intent(TicketsListActivity.this, ListingsActivity.class);
-        intent.putExtra("sellerUsername", sellerUsername);
-        startActivity(intent);
+        cardAllTickets.setOnClickListener(v -> {
+            Intent intent = new Intent(TicketsListActivity.this, ListingsActivity.class);
+            intent.putExtra("mode", "all");
+            startActivity(intent);
+        });
+
+        cardMyTickets.setOnClickListener(v -> {
+            Intent intent = new Intent(TicketsListActivity.this, ListingsActivity.class);
+            intent.putExtra("mode", "mine");
+            startActivity(intent);
+        });
+
+        findViewById(R.id.btnHome).setOnClickListener(v -> {
+            // כבר במסך הבית
+        });
+
+        findViewById(R.id.btnMessages).setOnClickListener(v -> {
+            Intent intent = new Intent(TicketsListActivity.this, ChatsListActivity.class);
+            startActivity(intent);
+        });
+
+        findViewById(R.id.btnProfile).setOnClickListener(v -> {
+            Intent intent = new Intent(TicketsListActivity.this, ProfileActivity.class);
+            startActivity(intent);
+        });
     }
 }

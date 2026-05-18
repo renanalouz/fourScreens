@@ -1,8 +1,10 @@
 package com.example.fourscreens;
 
 import com.example.fourscreens.data.entity.TicketListing;
-import com.example.fourscreens.data.entity.Message; // תיקון חשוב
+import com.example.fourscreens.data.entity.Message;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -17,6 +19,7 @@ import java.util.Map;
 public class DBHandler {
 
     private final FirebaseFirestore db;
+    private final FirebaseAuth auth;
 
     private static final String USERS_COLLECTION = "users";
     private static final String TICKETS_COLLECTION = "tickets";
@@ -25,105 +28,228 @@ public class DBHandler {
 
     public DBHandler() {
         db = FirebaseFirestore.getInstance();
+        auth = FirebaseAuth.getInstance();
     }
 
-    // ==========================================
-    // 1. כרטיסים (CRUD מלא)
-    // ==========================================
+    // -------------------- TICKETS --------------------
 
     public void addTicket(TicketListing ticket, FirestoreCallback callback) {
-        String id = db.collection(TICKETS_COLLECTION).document().getId();
+
+        FirebaseUser user = auth.getCurrentUser();
+
+        if (user == null) {
+            callback.onFailure("User not connected");
+            return;
+        }
+
+        String id = db.collection(TICKETS_COLLECTION)
+                .document()
+                .getId();
+
         ticket.setId(id);
+        ticket.setOwnerId(user.getUid());
 
-        db.collection(TICKETS_COLLECTION).document(id)
-                .set(ticket)
-                .addOnSuccessListener(unused -> callback.onSuccess("הכרטיס פורסם!"))
-                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
-    }
+        Map<String, Object> map = new HashMap<>();
 
-    public void updateTicket(TicketListing ticket, FirestoreCallback callback) {
-        db.collection(TICKETS_COLLECTION).document(ticket.getId())
-                .set(ticket)
-                .addOnSuccessListener(unused -> callback.onSuccess("הכרטיס עודכן"))
-                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
-    }
+        map.put("id", ticket.getId());
+        map.put("ownerId", ticket.getOwnerId());
+        map.put("eventName", ticket.getEventName());
+        map.put("eventDate", ticket.getEventDate());
+        map.put("location", ticket.getLocation());
+        map.put("price", ticket.getPrice());
+        map.put("eventType", ticket.getEventType());
+        map.put("sellerUsername", ticket.getSellerUsername());
+        map.put("description", ticket.getDescription());
 
-    public void deleteTicket(String ticketId, FirestoreCallback callback) {
-        db.collection(TICKETS_COLLECTION).document(ticketId)
-                .delete()
-                .addOnSuccessListener(unused -> callback.onSuccess("נמחק"))
-                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
-    }
-
-    public void getTicketsBySeller(String sellerName, FirestoreCallback callback) {
         db.collection(TICKETS_COLLECTION)
-                .whereEqualTo("sellerUsername", sellerName)
-                .get()
-                .addOnSuccessListener(query -> {
-                    List<TicketListing> list = new ArrayList<>();
-                    for (QueryDocumentSnapshot doc : query) {
-                        list.add(doc.toObject(TicketListing.class));
+                .document(id)
+                .set(map)
+                .addOnCompleteListener(task -> {
+
+                    if (task.isSuccessful()) {
+
+                        callback.onSuccess("הכרטיס פורסם!");
+
+                    } else {
+
+                        String error =
+                                task.getException() != null
+                                        ? task.getException().getMessage()
+                                        : "Unknown Firestore Error";
+
+                        callback.onFailure(error);
                     }
+                });
+    }
+    public void updateTicket(TicketListing ticket, FirestoreCallback callback) {
+
+        FirebaseUser user = auth.getCurrentUser();
+
+        if (user == null) {
+            callback.onFailure("User not connected");
+            return;
+        }
+
+        if (ticket.getOwnerId() == null ||
+                !ticket.getOwnerId().equals(user.getUid())) {
+
+            callback.onFailure("אין הרשאה לערוך");
+            return;
+        }
+
+        db.collection(TICKETS_COLLECTION)
+                .document(ticket.getId())
+                .set(ticket)
+                .addOnSuccessListener(unused ->
+                        callback.onSuccess("הכרטיס עודכן"))
+                .addOnFailureListener(e ->
+                        callback.onFailure(e.getMessage()));
+    }
+
+    public void deleteTicket(TicketListing ticket, FirestoreCallback callback) {
+
+        FirebaseUser user = auth.getCurrentUser();
+
+        if (user == null) {
+            callback.onFailure("User not connected");
+            return;
+        }
+
+        if (ticket.getOwnerId() == null ||
+                !ticket.getOwnerId().equals(user.getUid())) {
+
+            callback.onFailure("אין הרשאה למחוק");
+            return;
+        }
+
+        db.collection(TICKETS_COLLECTION)
+                .document(ticket.getId())
+                .delete()
+                .addOnSuccessListener(unused ->
+                        callback.onSuccess("נמחק"))
+                .addOnFailureListener(e ->
+                        callback.onFailure(e.getMessage()));
+    }
+
+    public void listenAllTickets(FirestoreCallback callback) {
+
+        db.collection(TICKETS_COLLECTION)
+                .addSnapshotListener((value, error) -> {
+
+                    if (error != null) {
+                        callback.onFailure(error.getMessage());
+                        return;
+                    }
+
+                    List<TicketListing> list = new ArrayList<>();
+
+                    if (value != null) {
+
+                        for (QueryDocumentSnapshot doc : value) {
+                            list.add(doc.toObject(TicketListing.class));
+                        }
+                    }
+
                     callback.onTicketsLoaded(list);
-                })
-                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+                });
+    }
+
+    public void listenCurrentUserTickets(FirestoreCallback callback) {
+
+        FirebaseUser user = auth.getCurrentUser();
+
+        if (user == null) {
+            callback.onFailure("User not connected");
+            return;
+        }
+
+        db.collection(TICKETS_COLLECTION)
+                .whereEqualTo("ownerId", user.getUid())
+                .addSnapshotListener((value, error) -> {
+
+                    if (error != null) {
+                        callback.onFailure(error.getMessage());
+                        return;
+                    }
+
+                    List<TicketListing> list = new ArrayList<>();
+
+                    if (value != null) {
+
+                        for (QueryDocumentSnapshot doc : value) {
+                            list.add(doc.toObject(TicketListing.class));
+                        }
+                    }
+
+                    callback.onTicketsLoaded(list);
+                });
     }
 
     public void getAllTickets(FirestoreCallback callback) {
-        db.collection(TICKETS_COLLECTION)
-                .get()
-                .addOnSuccessListener(query -> {
-                    List<TicketListing> list = new ArrayList<>();
-                    for (QueryDocumentSnapshot doc : query) {
-                        list.add(doc.toObject(TicketListing.class));
-                    }
-                    callback.onTicketsLoaded(list);
-                })
-                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+        listenAllTickets(callback);
     }
 
-    // ==========================================
-    // 2. משתמשים
-    // ==========================================
+    public void getCurrentUserTickets(FirestoreCallback callback) {
+        listenCurrentUserTickets(callback);
+    }
+
+    // -------------------- USERS --------------------
 
     public void getStudentById(String id, FirestoreCallback callback) {
-        db.collection(USERS_COLLECTION).document(id)
+
+        db.collection(USERS_COLLECTION)
+                .document(id)
                 .get()
                 .addOnSuccessListener(doc -> {
+
                     if (doc.exists()) {
+
                         Student s = doc.toObject(Student.class);
+
                         List<Student> list = new ArrayList<>();
                         list.add(s);
+
                         callback.onStudentsLoaded(list);
+
                     } else {
+
                         callback.onFailure("לא נמצא משתמש");
                     }
                 })
-                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+                .addOnFailureListener(e ->
+                        callback.onFailure(e.getMessage()));
     }
 
-    // ==========================================
-    // 3. צ'אט
-    // ==========================================
+    // -------------------- CHATS --------------------
 
     private String generateChatId(String id1, String id2) {
+
         return (id1.compareTo(id2) < 0)
                 ? id1 + "_" + id2
                 : id2 + "_" + id1;
     }
 
-    public void sendMessage(String senderId, String receiverId, String text, String senderName, FirestoreCallback callback) {
+    public void sendMessage(String senderId,
+                            String receiverId,
+                            String text,
+                            String senderName,
+                            FirestoreCallback callback) {
 
-        if (text.trim().isEmpty()) return;
+        if (text.trim().isEmpty()) {
+            return;
+        }
 
         String chatId = generateChatId(senderId, receiverId);
+
         long timestamp = System.currentTimeMillis();
 
         Map<String, Object> messageMap = new HashMap<>();
+
         messageMap.put("senderId", senderId);
         messageMap.put("receiverId", receiverId);
         messageMap.put("text", text);
         messageMap.put("timestamp", timestamp);
+        messageMap.put("seen", false);
 
         db.collection(CHATS_COLLECTION)
                 .document(chatId)
@@ -132,9 +258,14 @@ public class DBHandler {
                 .addOnSuccessListener(docRef -> {
 
                     Map<String, Object> chatSummary = new HashMap<>();
+
                     chatSummary.put("lastMessage", text);
                     chatSummary.put("timestamp", timestamp);
-                    chatSummary.put("participants", Arrays.asList(senderId, receiverId));
+                    chatSummary.put("participants",
+                            Arrays.asList(senderId, receiverId));
+
+                    chatSummary.put("senderId", senderId);
+                    chatSummary.put("receiverId", receiverId);
 
                     db.collection(CHATS_COLLECTION)
                             .document(chatId)
@@ -142,10 +273,13 @@ public class DBHandler {
 
                     callback.onSuccess("נשלח");
                 })
-                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+                .addOnFailureListener(e ->
+                        callback.onFailure(e.getMessage()));
     }
 
-    public void getMessages(String user1, String user2, FirestoreCallback callback) {
+    public void getMessages(String user1,
+                            String user2,
+                            FirestoreCallback callback) {
 
         String chatId = generateChatId(user1, user2);
 
@@ -160,15 +294,46 @@ public class DBHandler {
                         return;
                     }
 
+                    List<Message> messages = new ArrayList<>();
+
                     if (value != null) {
-                        List<Message> messages = new ArrayList<>();
 
                         for (QueryDocumentSnapshot doc : value) {
                             messages.add(doc.toObject(Message.class));
                         }
-
-                        callback.onMessagesLoaded(messages);
                     }
+
+                    callback.onMessagesLoaded(messages);
+                });
+    }
+
+    public void getUserChats(String currentUserId,
+                             FirestoreCallback callback) {
+
+        db.collection(CHATS_COLLECTION)
+                .whereArrayContains("participants", currentUserId)
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .addSnapshotListener((value, error) -> {
+
+                    if (error != null) {
+                        callback.onFailure(error.getMessage());
+                        return;
+                    }
+
+                    List<Map<String, Object>> chats = new ArrayList<>();
+
+                    if (value != null) {
+
+                        for (QueryDocumentSnapshot doc : value) {
+
+                            Map<String, Object> map = doc.getData();
+                            map.put("chatId", doc.getId());
+
+                            chats.add(map);
+                        }
+                    }
+
+                    callback.onChatsLoaded(chats);
                 });
     }
 }

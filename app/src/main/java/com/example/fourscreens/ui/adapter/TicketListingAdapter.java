@@ -13,6 +13,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.fourscreens.R;
 import com.example.fourscreens.TicketDetailsActivity;
 import com.example.fourscreens.data.entity.TicketListing;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,9 +28,11 @@ public class TicketListingAdapter extends RecyclerView.Adapter<TicketListingAdap
 
     private List<TicketListing> listings = new ArrayList<>();
     private final OnTicketActionListener listener;
+    private final FirebaseUser currentUser;
 
     public TicketListingAdapter(OnTicketActionListener listener) {
         this.listener = listener;
+        this.currentUser = FirebaseAuth.getInstance().getCurrentUser();
     }
 
     public void setListings(List<TicketListing> listings) {
@@ -41,6 +45,7 @@ public class TicketListingAdapter extends RecyclerView.Adapter<TicketListingAdap
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_ticket_listing, parent, false);
+
         return new ViewHolder(view);
     }
 
@@ -52,23 +57,29 @@ public class TicketListingAdapter extends RecyclerView.Adapter<TicketListingAdap
         holder.tvDetails.setText(item.getEventDate() + " • " + item.getLocation());
         holder.tvPrice.setText("₪" + item.getPrice());
 
-        holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(v.getContext(), TicketDetailsActivity.class);
-            intent.putExtra("ticket", item);
-            v.getContext().startActivity(intent);
-        });
+        holder.itemView.setOnClickListener(v -> openTicketDetails(v, item));
 
-        holder.btnEdit.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onEdit(item);
-            }
-        });
+        boolean isOwner =
+                currentUser != null &&
+                        item.getOwnerId() != null &&
+                        item.getOwnerId().equals(currentUser.getUid());
+
+        holder.btnEdit.setVisibility(isOwner ? View.VISIBLE : View.GONE);
+        holder.btnDelete.setVisibility(isOwner ? View.VISIBLE : View.GONE);
+
+        holder.btnEdit.setOnClickListener(v -> openTicketDetails(v, item));
 
         holder.btnDelete.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onDelete(item);
             }
         });
+    }
+
+    private void openTicketDetails(View v, TicketListing item) {
+        Intent intent = new Intent(v.getContext(), TicketDetailsActivity.class);
+        intent.putExtra("ticket", item);
+        v.getContext().startActivity(intent);
     }
 
     @Override
@@ -86,6 +97,7 @@ public class TicketListingAdapter extends RecyclerView.Adapter<TicketListingAdap
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
+
             tvEventName = itemView.findViewById(R.id.tvEventName);
             tvDetails = itemView.findViewById(R.id.tvDetails);
             tvPrice = itemView.findViewById(R.id.tvPrice);

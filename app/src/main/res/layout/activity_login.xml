@@ -1,58 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/background"
-    android:padding="24dp">
+    android:background="@color/background">
 
-    <!-- לוגו -->
-    <ImageView
-        android:id="@+id/loginLogo"
-        android:layout_width="120dp"
-        android:layout_height="120dp"
-        android:layout_gravity="center"
-        android:src="@drawable/logo"
-        android:contentDescription="App logo"
-        android:layout_marginTop="40dp"
-        android:layout_marginBottom="32dp" />
-
-    <!-- כותרת -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="התחברות"
-        android:textSize="22sp"
-        android:textStyle="bold"
-        android:textColor="@color/text_primary"
-        android:layout_gravity="center"
-        android:layout_marginBottom="24dp" />
-
-    <!-- אימייל -->
-    <EditText
-        android:id="@+id/emailInput"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="אימייל"
-        android:inputType="textEmailAddress"
-        android:layout_marginBottom="16dp" />
+        android:orientation="vertical"
+        android:padding="24dp">
 
-    <!-- סיסמה -->
-    <EditText
-        android:id="@+id/passwordInput"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="סיסמה"
-        android:inputType="textPassword"
-        android:layout_marginBottom="24dp" />
+        <ImageView
+            android:id="@+id/loginLogo"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:layout_gravity="center"
+            android:src="@drawable/logo"
+            android:contentDescription="App logo"
+            android:layout_marginTop="40dp"
+            android:layout_marginBottom="32dp" />
 
-    <!-- כפתור התחברות -->
-    <Button
-        android:id="@+id/loginButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="התחבר"
-        android:backgroundTint="@color/primary"
-        android:textColor="@color/white" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="התחברות / הרשמה"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:layout_gravity="center"
+            android:layout_marginBottom="24dp" />
 
-</LinearLayout>
+        <EditText
+            android:id="@+id/etEmail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="אימייל"
+            android:inputType="textEmailAddress"
+            android:layout_marginBottom="16dp" />
+
+        <EditText
+            android:id="@+id/etPassword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="סיסמה"
+            android:inputType="textPassword"
+            android:layout_marginBottom="24dp" />
+
+        <Button
+            android:id="@+id/loginButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="התחבר"
+            android:backgroundTint="@color/primary"
+            android:textColor="@color/white"
+            android:layout_marginBottom="12dp" />
+
+        <Button
+            android:id="@+id/registerButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="הרשם"
+            android:backgroundTint="@color/primary"
+            android:textColor="@color/white" />
+
+    </LinearLayout>
+</ScrollView>

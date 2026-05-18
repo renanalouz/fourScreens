@@ -1,6 +1,7 @@
 package com.example.fourscreens;
 
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -10,6 +11,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.fourscreens.data.entity.TicketListing;
 import com.example.fourscreens.ui.adapter.TicketListingAdapter;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.util.List;
 
@@ -20,13 +23,31 @@ public class ListingsActivity extends AppCompatActivity implements FirestoreCall
     private TicketListingAdapter adapter;
     private DBHandler dbHandler;
 
-    // כרגע משתמש דמו, אחר כך נחליף למשתמש מחובר אמיתי
-    private final String sellerUsername = "demoUser";
+    private FirebaseUser currentUser;
+    private String sellerUsername;
+    private String ownerId;
+    private String mode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_listings);
+
+        currentUser = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (currentUser == null) {
+            Toast.makeText(this, "User not connected", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
+        ownerId = currentUser.getUid();
+        sellerUsername = currentUser.getEmail();
+
+        mode = getIntent().getStringExtra("mode");
+        if (mode == null) {
+            mode = "all";
+        }
 
         rvListings = findViewById(R.id.rvListings);
         btnAdd = findViewById(R.id.btnAdd);
@@ -48,24 +69,35 @@ public class ListingsActivity extends AppCompatActivity implements FirestoreCall
         rvListings.setLayoutManager(new LinearLayoutManager(this));
         rvListings.setAdapter(adapter);
 
-        loadTickets();
+        if (mode.equals("mine")) {
+            setTitle("הכרטיסים שלי");
+            btnAdd.setVisibility(View.VISIBLE);
+        } else {
+            setTitle("כל הכרטיסים");
+            btnAdd.setVisibility(View.GONE);
+        }
 
         btnAdd.setOnClickListener(v -> addNewTicket());
+
+        listenTickets();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        loadTickets();
-    }
-
-    private void loadTickets() {
-        dbHandler.getTicketsBySeller(sellerUsername, this);
+    private void listenTickets() {
+        if (mode.equals("mine")) {
+            dbHandler.listenCurrentUserTickets(this);
+        } else {
+            dbHandler.listenAllTickets(this);
+        }
     }
 
     private void addNewTicket() {
+        Toast.makeText(this,
+                "מנסה לשמור כרטיס למשתמש: " + sellerUsername,
+                Toast.LENGTH_LONG).show();
+
         TicketListing newTicket = new TicketListing(
                 "",
+                ownerId,
                 "הופעה חדשה",
                 "20/05/2026",
                 "חיפה",
@@ -86,7 +118,7 @@ public class ListingsActivity extends AppCompatActivity implements FirestoreCall
     }
 
     private void deleteTicket(TicketListing ticket) {
-        dbHandler.deleteTicket(ticket.getId(), this);
+        dbHandler.deleteTicket(ticket, this);
     }
 
     @Override
@@ -97,11 +129,12 @@ public class ListingsActivity extends AppCompatActivity implements FirestoreCall
     @Override
     public void onSuccess(String message) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
-        loadTickets();
     }
 
     @Override
     public void onFailure(String error) {
-        Toast.makeText(this, error, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this,
+                "שגיאה בשמירה: " + error,
+                Toast.LENGTH_LONG).show();
     }
 }

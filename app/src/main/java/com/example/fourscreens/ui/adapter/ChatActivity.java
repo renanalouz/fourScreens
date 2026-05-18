@@ -11,6 +11,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.fourscreens.data.entity.Message;
 import com.example.fourscreens.ui.adapter.MessageAdapter;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,49 +27,59 @@ public class ChatActivity extends AppCompatActivity implements FirestoreCallback
     private MessageAdapter adapter;
     private List<Message> messageList;
 
-    // כרגע משתמש דמו עד שנעשה התחברות אמיתית
-    private String currentUserId = "demoUser";
-    private String receiverId = "";
+    private FirebaseUser currentUser;
+
+    private String currentUserId;
+    private String currentUsername;
+    private String receiverId;
+    private String receiverUsername;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
 
+        currentUser = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (currentUser == null) {
+            Toast.makeText(this, "User not connected", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
+        currentUserId = currentUser.getUid();
+        currentUsername = currentUser.getEmail();
+
+        receiverId = getIntent().getStringExtra("receiverId");
+        receiverUsername = getIntent().getStringExtra("receiverUsername");
+
+        if (receiverId == null || receiverId.trim().isEmpty()) {
+            Toast.makeText(this, "לא נמצא משתמש לשיחה", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
+        if (receiverUsername == null || receiverUsername.trim().isEmpty()) {
+            receiverUsername = "משתמש";
+        }
+
         dbHandler = new DBHandler();
         messageList = new ArrayList<>();
-
-        if (getIntent() != null) {
-            String senderFromIntent = getIntent().getStringExtra("senderUsername");
-            String receiverFromIntent = getIntent().getStringExtra("receiverUsername");
-
-            if (senderFromIntent != null && !senderFromIntent.trim().isEmpty()) {
-                currentUserId = senderFromIntent;
-            }
-
-            if (receiverFromIntent != null && !receiverFromIntent.trim().isEmpty()) {
-                receiverId = receiverFromIntent;
-            }
-        }
 
         rvMessages = findViewById(R.id.rvMessages);
         etMessage = findViewById(R.id.etMessage);
         btnSend = findViewById(R.id.btnSend);
 
         adapter = new MessageAdapter(messageList, currentUserId);
+
         rvMessages.setLayoutManager(new LinearLayoutManager(this));
         rvMessages.setAdapter(adapter);
 
-        if (receiverId.isEmpty()) {
-            Toast.makeText(this, "לא נמצא משתמש לשיחה", Toast.LENGTH_SHORT).show();
-            finish();
-            return;
-        }
-
-        setTitle("צ'אט עם " + receiverId);
+        setTitle("צ'אט עם " + receiverUsername);
 
         btnSend.setOnClickListener(v -> {
             String text = etMessage.getText().toString().trim();
+
             if (!text.isEmpty()) {
                 sendMessage(text);
             }
@@ -77,18 +89,30 @@ public class ChatActivity extends AppCompatActivity implements FirestoreCallback
     }
 
     private void sendMessage(String text) {
-        dbHandler.sendMessage(currentUserId, receiverId, text, currentUserId, this);
+        dbHandler.sendMessage(
+                currentUserId,
+                receiverId,
+                text,
+                currentUsername,
+                this
+        );
+
         etMessage.setText("");
     }
 
     private void listenForMessages() {
-        dbHandler.getMessages(currentUserId, receiverId, this);
+        dbHandler.getMessages(
+                currentUserId,
+                receiverId,
+                this
+        );
     }
 
     @Override
     public void onMessagesLoaded(List<Message> messages) {
         messageList.clear();
         messageList.addAll(messages);
+
         adapter.notifyDataSetChanged();
 
         if (!messageList.isEmpty()) {
@@ -98,6 +122,7 @@ public class ChatActivity extends AppCompatActivity implements FirestoreCallback
 
     @Override
     public void onSuccess(String message) {
+        // אין צורך בטוסט על כל הודעה
     }
 
     @Override

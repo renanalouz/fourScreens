@@ -14,6 +14,8 @@ public class TicketListing implements Serializable {
     @NonNull
     private String id;
 
+    private String ownerId;
+
     private String eventName;
     private String eventDate;
     private String location;
@@ -27,9 +29,18 @@ public class TicketListing implements Serializable {
     }
 
     @Ignore
-    public TicketListing(String id, String eventName, String eventDate, String location, int price,
-                         String eventType, String sellerUsername, String description) {
+    public TicketListing(String id,
+                         String ownerId,
+                         String eventName,
+                         String eventDate,
+                         String location,
+                         int price,
+                         String eventType,
+                         String sellerUsername,
+                         String description) {
+
         this.id = id;
+        this.ownerId = ownerId;
         this.eventName = eventName;
         this.eventDate = eventDate;
         this.location = location;
@@ -46,6 +57,14 @@ public class TicketListing implements Serializable {
 
     public void setId(@NonNull String id) {
         this.id = id;
+    }
+
+    public String getOwnerId() {
+        return ownerId;
+    }
+
+    public void setOwnerId(String ownerId) {
+        this.ownerId = ownerId;
     }
 
     public String getEventName() {

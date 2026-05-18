@@ -1,5 +1,6 @@
 package com.example.fourscreens.ui.adapter;
 
+import android.graphics.Color;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,6 +19,7 @@ import java.util.List;
 public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageViewHolder> {
 
     private List<Message> messages;
+
     private final String currentUserId;
 
     public MessageAdapter(List<Message> messages, String currentUserId) {
@@ -32,27 +34,57 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
 
     @NonNull
     @Override
-    public MessageViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public MessageViewHolder onCreateViewHolder(
+            @NonNull ViewGroup parent,
+            int viewType
+    ) {
+
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_message, parent, false);
+
         return new MessageViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull MessageViewHolder holder, int position) {
+    public void onBindViewHolder(
+            @NonNull MessageViewHolder holder,
+            int position
+    ) {
+
         Message message = messages.get(position);
+
         holder.tvMessage.setText(message.getText());
 
         LinearLayout.LayoutParams params =
-                (LinearLayout.LayoutParams) holder.tvMessage.getLayoutParams();
+                (LinearLayout.LayoutParams)
+                        holder.messageContainer.getLayoutParams();
 
-        if (message.getSenderId() != null && message.getSenderId().equals(currentUserId)) {
+        boolean isCurrentUser =
+                message.getSenderId() != null &&
+                        message.getSenderId().equals(currentUserId);
+
+        if (isCurrentUser) {
+
             params.gravity = Gravity.END;
+
+            holder.messageContainer.setBackgroundResource(
+                    R.drawable.bg_message_sent
+            );
+
+            holder.tvMessage.setTextColor(Color.WHITE);
+
         } else {
+
             params.gravity = Gravity.START;
+
+            holder.messageContainer.setBackgroundResource(
+                    R.drawable.bg_message_received
+            );
+
+            holder.tvMessage.setTextColor(Color.BLACK);
         }
 
-        holder.tvMessage.setLayoutParams(params);
+        holder.messageContainer.setLayoutParams(params);
     }
 
     @Override
@@ -61,11 +93,17 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
     }
 
     static class MessageViewHolder extends RecyclerView.ViewHolder {
+
         TextView tvMessage;
+        LinearLayout messageContainer;
 
         public MessageViewHolder(@NonNull View itemView) {
             super(itemView);
+
             tvMessage = itemView.findViewById(R.id.tvMessage);
+
+            messageContainer =
+                    itemView.findViewById(R.id.messageContainer);
         }
     }
 }

@@ -3,6 +3,7 @@ package com.example.fourscreens;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -10,20 +11,38 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.fourscreens.data.entity.TicketListing;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class TicketDetailsActivity extends AppCompatActivity implements FirestoreCallback {
 
     private EditText etName, etDate, etLocation, etPrice, etType, etDescription;
+
     private Button btnUpdate, btnDelete, btnChat, btnOpenMaps;
+
     private DBHandler dbHandler;
     private TicketListing ticket;
 
-    private final String currentUsername = "demoUser";
+    private FirebaseUser currentUser;
+
+    private String currentUserId;
+    private String currentUsername;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ticket_details);
+
+        currentUser = FirebaseAuth.getInstance().getCurrentUser();
+
+        if(currentUser == null) {
+            Toast.makeText(this, "User not connected", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
+        currentUserId = currentUser.getUid();
+        currentUsername = currentUser.getEmail();
 
         etName = findViewById(R.id.etName);
         etDate = findViewById(R.id.etDate);
@@ -31,12 +50,14 @@ public class TicketDetailsActivity extends AppCompatActivity implements Firestor
         etPrice = findViewById(R.id.etPrice);
         etType = findViewById(R.id.etType);
         etDescription = findViewById(R.id.etDescription);
+
         btnUpdate = findViewById(R.id.btnUpdate);
         btnDelete = findViewById(R.id.btnDelete);
         btnChat = findViewById(R.id.btnChat);
         btnOpenMaps = findViewById(R.id.btnOpenMaps);
 
         dbHandler = new DBHandler();
+
         ticket = (TicketListing) getIntent().getSerializableExtra("ticket");
 
         if (ticket == null) {
@@ -52,66 +73,171 @@ public class TicketDetailsActivity extends AppCompatActivity implements Firestor
         etType.setText(ticket.getEventType());
         etDescription.setText(ticket.getDescription());
 
+        boolean isOwner =
+                ticket.getOwnerId() != null &&
+                        ticket.getOwnerId().equals(currentUserId);
+
+        if (!isOwner) {
+
+            btnUpdate.setVisibility(View.GONE);
+            btnDelete.setVisibility(View.GONE);
+
+            etName.setEnabled(false);
+            etDate.setEnabled(false);
+            etLocation.setEnabled(false);
+            etPrice.setEnabled(false);
+            etType.setEnabled(false);
+            etDescription.setEnabled(false);
+
+        } else {
+
+            btnChat.setVisibility(View.GONE);
+        }
+
         btnUpdate.setOnClickListener(v -> updateTicket());
-        btnDelete.setOnClickListener(v -> dbHandler.deleteTicket(ticket.getId(), this));
+
+        btnDelete.setOnClickListener(v ->
+                dbHandler.deleteTicket(ticket, this));
 
         btnOpenMaps.setOnClickListener(v -> {
-            String location = etLocation.getText().toString().trim();
+
+            String location =
+                    etLocation.getText().toString().trim();
 
             if (location.isEmpty()) {
-                Toast.makeText(this, "אין מיקום לפתיחה", Toast.LENGTH_SHORT).show();
+
+                Toast.makeText(this,
+                        "אין מיקום לפתיחה",
+                        Toast.LENGTH_SHORT).show();
+
                 return;
             }
 
-            Uri uri = Uri.parse("geo:0,0?q=" + Uri.encode(location));
-            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+            Uri uri = Uri.parse(
+                    "geo:0,0?q=" + Uri.encode(location)
+            );
+
+            Intent intent =
+                    new Intent(Intent.ACTION_VIEW, uri);
+
             intent.setPackage("com.google.android.apps.maps");
 
             try {
+
                 startActivity(intent);
+
             } catch (Exception e) {
-                Toast.makeText(this, "Google Maps לא מותקן", Toast.LENGTH_SHORT).show();
+
+                Toast.makeText(this,
+                        "Google Maps לא מותקן",
+                        Toast.LENGTH_SHORT).show();
             }
         });
 
         btnChat.setOnClickListener(v -> {
-            if (ticket.getSellerUsername() == null || ticket.getSellerUsername().trim().isEmpty()) {
-                Toast.makeText(this, "לא נמצא מוכר", Toast.LENGTH_SHORT).show();
+
+            if (ticket.getSellerUsername() == null ||
+                    ticket.getSellerUsername().trim().isEmpty()) {
+
+                Toast.makeText(this,
+                        "לא נמצא מוכר",
+                        Toast.LENGTH_SHORT).show();
+
                 return;
             }
 
-            if (ticket.getSellerUsername().equals(currentUsername)) {
-                Toast.makeText(this, "זה הכרטיס שלך", Toast.LENGTH_SHORT).show();
+            if (ticket.getOwnerId().equals(currentUserId)) {
+
+                Toast.makeText(this,
+                        "זה הכרטיס שלך",
+                        Toast.LENGTH_SHORT).show();
+
                 return;
             }
 
-            Intent intent = new Intent(TicketDetailsActivity.this, ChatActivity.class);
-            intent.putExtra("senderUsername", currentUsername);
-            intent.putExtra("receiverUsername", ticket.getSellerUsername());
-            intent.putExtra("ticketId", ticket.getId());
-            intent.putExtra("ticketName", ticket.getEventName());
+            Intent intent =
+                    new Intent(TicketDetailsActivity.this,
+                            ChatActivity.class);
+
+            intent.putExtra(
+                    "senderId",
+                    currentUserId
+            );
+
+            intent.putExtra(
+                    "senderUsername",
+                    currentUsername
+            );
+
+            intent.putExtra(
+                    "receiverUsername",
+                    ticket.getSellerUsername()
+            );
+
+            intent.putExtra(
+                    "receiverId",
+                    ticket.getOwnerId()
+            );
+
+            intent.putExtra(
+                    "ticketId",
+                    ticket.getId()
+            );
+
+            intent.putExtra(
+                    "ticketName",
+                    ticket.getEventName()
+            );
+
             startActivity(intent);
         });
     }
 
     private void updateTicket() {
-        String name = etName.getText().toString().trim();
-        String date = etDate.getText().toString().trim();
-        String location = etLocation.getText().toString().trim();
-        String priceText = etPrice.getText().toString().trim();
-        String type = etType.getText().toString().trim();
-        String description = etDescription.getText().toString().trim();
 
-        if (name.isEmpty() || date.isEmpty() || location.isEmpty() || priceText.isEmpty() || type.isEmpty()) {
-            Toast.makeText(this, "מלאי את כל השדות החובה", Toast.LENGTH_SHORT).show();
+        String name =
+                etName.getText().toString().trim();
+
+        String date =
+                etDate.getText().toString().trim();
+
+        String location =
+                etLocation.getText().toString().trim();
+
+        String priceText =
+                etPrice.getText().toString().trim();
+
+        String type =
+                etType.getText().toString().trim();
+
+        String description =
+                etDescription.getText().toString().trim();
+
+        if (name.isEmpty() ||
+                date.isEmpty() ||
+                location.isEmpty() ||
+                priceText.isEmpty() ||
+                type.isEmpty()) {
+
+            Toast.makeText(this,
+                    "מלאי את כל השדות החובה",
+                    Toast.LENGTH_SHORT).show();
+
             return;
         }
 
         int price;
+
         try {
+
             price = Integer.parseInt(priceText);
+
         } catch (NumberFormatException e) {
-            Toast.makeText(this, "מחיר חייב להיות מספר", Toast.LENGTH_SHORT).show();
+
+            Toast.makeText(this,
+                    "מחיר חייב להיות מספר",
+                    Toast.LENGTH_SHORT).show();
+
             return;
         }
 
@@ -127,12 +253,19 @@ public class TicketDetailsActivity extends AppCompatActivity implements Firestor
 
     @Override
     public void onSuccess(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+
+        Toast.makeText(this,
+                message,
+                Toast.LENGTH_SHORT).show();
+
         finish();
     }
 
     @Override
     public void onFailure(String error) {
-        Toast.makeText(this, error, Toast.LENGTH_SHORT).show();
+
+        Toast.makeText(this,
+                error,
+                Toast.LENGTH_SHORT).show();
     }
 }
